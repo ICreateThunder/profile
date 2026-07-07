@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "description": "Dev tooling - Tailwind CSS compilation via build.rs. Not in production runtime.",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.0.0",
+    "@tailwindcss/typography": "^0.5.19"
+  }
+}

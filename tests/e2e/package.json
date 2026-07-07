@@ -1,0 +1,14 @@
+{
+  "name": "profile-e2e",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Browser e2e + accessibility tests (Tier 3). Isolated from the Rust build; run against a running instance via BASE_URL.",
+  "scripts": {
+    "test": "playwright test",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@axe-core/playwright": "^4.10.0"
+  }
+}

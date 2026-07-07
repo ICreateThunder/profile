@@ -1,0 +1,18 @@
+# Deny-default build context: ignore everything, then allow only what the
+# Dockerfile builds from. Image contents are already pinned by the explicit
+# COPY lines in Dockerfile; this keeps the context minimal and secure-by-default,
+# and keeps the cache stable if we later move to a `COPY . .` (cargo-chef) layout.
+*
+
+# Workspace manifests
+!Cargo.toml
+!Cargo.lock
+
+# Crates the Dockerfile compiles
+!apps
+!crates
+
+# Re-exclude heavy/generated paths under the allowed dirs (last match wins)
+**/target/
+**/node_modules/
+**/.bun/

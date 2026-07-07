@@ -1,0 +1,69 @@
+# CodeQL - static analysis for Rust.
+#
+# Build mode: `none`. CodeQL Rust support went GA in CodeQL 2.23.3
+# (October 2025); the Rust extractor walks `Cargo.toml`s without invoking
+# `cargo build`. That sidesteps any build.rs / Bun toolchain dependency
+# in the analysis path.
+#
+# Value over the existing CI gates: CodeQL's strength is inter-procedural
+# taint tracking - HTTP handler → sqlx query, path param → std::fs sink,
+# header → log sink. cargo-audit (dependency advisories) and clippy (lints)
+# both miss that class.
+#
+# All actions are pinned to a full commit SHA; Dependabot keeps both the
+# SHA and the trailing version comment current.
+
+name: CodeQL
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  schedule:
+    - cron: "17 3 * * 3" # Wednesdays 03:17 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: codeql-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+  analyse:
+    name: CodeQL analysis (Rust)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [rust]
+
+    steps:
+      # egress-policy: audit for now - CodeQL pulls its bundles from GitHub;
+      # switch to block once the first runs confirm the endpoint set.
+      - name: Harden the runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Check out code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Initialise CodeQL
+        uses: github/codeql-action/init@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
+        with:
+          category: "/language:${{ matrix.language }}"

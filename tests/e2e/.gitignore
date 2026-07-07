@@ -1,0 +1,5 @@
+# Playwright artifacts (node_modules is covered by the root .gitignore)
+/test-results/
+/playwright-report/
+/blob-report/
+/.cache/

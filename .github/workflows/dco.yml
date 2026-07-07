@@ -1,0 +1,79 @@
+# Developer Certificate of Origin (DCO) check
+#
+# Every commit in a pull request must carry a `Signed-off-by:` trailer.
+# This asserts the author's right to contribute the change under the
+# project's AGPL-3.0-or-later licence. See:
+#   - https://developercertificate.org
+#   - CONTRIBUTING.md, section "Developer Certificate of Origin (DCO)"
+#
+# How to fix a failed run:
+#
+#   For the most recent commit only:
+#     git commit --amend -s --no-edit
+#     git push --force-with-lease
+#
+#   For multiple commits on the branch:
+#     git rebase --signoff main
+#     git push --force-with-lease
+#
+# Sign-off (`-s`) is the DCO. Cryptographic signing (`-S`) is separate and
+# is also required on `main`. See CONTRIBUTING.md for SSH/GPG setup.
+
+name: DCO
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+concurrency:
+  group: dco-${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  dco-check:
+    name: Verify Signed-off-by on every commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Check out PR head
+        if: github.event.pull_request.user.login != 'dependabot[bot]'
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Verify DCO sign-off
+        if: github.event.pull_request.user.login != 'dependabot[bot]'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          status=0
+          while read -r sha; do
+            [ -n "$sha" ] || continue
+            author="$(git show -s --format='%ae' "$sha")"
+            subject="$(git show -s --format='%s' "$sha")"
+            if git show -s --format='%B' "$sha" \
+                 | sed -n 's/^[Ss]igned-off-by:.*<\(.*\)>.*/\1/p' \
+                 | grep -qxF "$author"; then
+              echo "ok           $sha  $subject"
+            else
+              echo "NO SIGN-OFF  $sha  $subject  (author <$author>)"
+              status=1
+            fi
+          done < <(git rev-list "${BASE_SHA}..${HEAD_SHA}")
+          [ "$status" -eq 0 ] || { echo "::error::Every commit needs a Signed-off-by trailer matching its author email. See CONTRIBUTING.md (DCO)."; exit 1; }

@@ -1,0 +1,170 @@
+# Security scanning - Trivy (vulns, secrets, misconfig, SBOM) + scheduled
+# advisory re-scan. Complements the code/dependency gates in ci.yml with
+# artifact-level scanning and drift detection.
+#
+# Layout:
+#   - filesystem : PR + push + nightly. Scans the repo (Cargo.lock, package.json,
+#                  Dockerfile, workflows) for known CVEs, leaked secrets and
+#                  misconfiguration; emits a CycloneDX SBOM. Cheap, no image build.
+#   - image      : nightly + manual only. Builds the runtime image and scans it
+#                  for OS-package and (via cargo-auditable) Rust-crate CVEs. This
+#                  is the drift check - it catches new advisories against an
+#                  unchanged image. The release image is also gated in deploy.yml.
+#   - advisories : nightly + manual only. Re-runs cargo-deny so a freshly
+#                  published RUSTSEC advisory fails a build without a new commit.
+#
+# Tools (Trivy) are installed as version-pinned CLIs rather than third-party
+# actions, matching the cargo-deny convention in ci.yml (keeps the SHA-pinning
+# policy intact). GitHub-published actions are pinned to a full commit SHA.
+
+name: Security scan
+
+on:
+  pull_request:
+  push:
+    branches: ["main"]
+  schedule:
+    - cron: "37 2 * * *" # daily 02:37 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+# Runner hardening: every job starts with step-security/harden-runner in
+# `egress-policy: audit` (records outbound calls, blocks nothing). Flip to
+# `block` with per-job `allowed-endpoints` once the first runs - or the local
+# tinyproxy capture - confirm the real egress (e.g. mirror.gcr.io for Trivy's DB).
+env:
+  TRIVY_VERSION: "0.72.0"
+
+jobs:
+  filesystem:
+    name: Trivy filesystem (vuln, secret, misconfig, SBOM)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write # upload SARIF to code scanning
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Check out code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Install Trivy
+        run: |
+          curl -sfL "https://raw.githubusercontent.com/aquasecurity/trivy/v${TRIVY_VERSION}/contrib/install.sh" \
+            | sh -s -- -b /usr/local/bin "v${TRIVY_VERSION}"
+          trivy --version
+
+      # SARIF (informational, never fails the step) -> code scanning.
+      - name: Scan filesystem (SARIF)
+        run: |
+          trivy fs --scanners vuln,secret,misconfig,license \
+            --format sarif --output trivy-fs.sarif \
+            --severity HIGH,CRITICAL --ignore-unfixed .
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
+        with:
+          sarif_file: trivy-fs.sarif
+          category: trivy-fs
+
+      - name: Generate CycloneDX SBOM
+        run: trivy fs --format cyclonedx --output sbom-source.cdx.json .
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sbom-source-cyclonedx
+          path: sbom-source.cdx.json
+          retention-days: 30
+
+      # Gate: fail only on fixable High/Critical vulnerabilities.
+      - name: Vulnerability gate
+        run: trivy fs --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 .
+
+  image:
+    name: Trivy image (OS + Rust CVEs, nightly drift)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Check out code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Build runtime image
+        run: docker build -t profile:scan -f Dockerfile .
+
+      - name: Install Trivy
+        run: |
+          curl -sfL "https://raw.githubusercontent.com/aquasecurity/trivy/v${TRIVY_VERSION}/contrib/install.sh" \
+            | sh -s -- -b /usr/local/bin "v${TRIVY_VERSION}"
+
+      - name: Scan image (SARIF)
+        run: |
+          trivy image --format sarif --output trivy-image.sarif \
+            --severity HIGH,CRITICAL --ignore-unfixed profile:scan
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
+        with:
+          sarif_file: trivy-image.sarif
+          category: trivy-image
+
+      - name: Generate image SBOM (CycloneDX)
+        run: trivy image --format cyclonedx --output sbom-image.cdx.json profile:scan
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sbom-image-cyclonedx
+          path: sbom-image.cdx.json
+          retention-days: 30
+
+      - name: Vulnerability gate
+        run: trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 profile:scan
+
+  advisories:
+    name: cargo-deny advisories (nightly re-scan)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Check out code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Rust build cache
+        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+
+      - name: Install cargo-deny
+        run: cargo install cargo-deny --locked --version 0.19.9
+
+      - name: cargo deny check advisories
+        run: cargo deny check advisories

@@ -1,0 +1,121 @@
+# Build and push - container image to GitHub Container Registry (GHCR).
+#
+# The image is public and self-contained: it holds no secrets and can be
+# rebuilt by anyone forking this repository. Publishing uses the workflow's
+# ephemeral GITHUB_TOKEN - no cloud credentials are stored in CI.
+#
+# Deployment is decoupled (GitOps): this workflow's job ends at a signed image in
+# GHCR. A separate promotion step pins that image *by digest* into a private
+# deploy repository, which Flux reconciles into an isolated namespace on a hosted
+# cluster - Flux tracks the deploy repository, not the registry and not this repo.
+# Nothing about that cluster - provider, topology, addresses - lives in this
+# public repository.
+#
+# All actions are pinned to a full commit SHA; Dependabot keeps both the
+# SHA and the trailing version comment current.
+
+name: Build and Push
+
+on:
+  push:
+    tags: ["v*"]
+
+# Only one deploy at a time; queue subsequent pushes.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write # push the image to GHCR
+  id-token: write # Sigstore keyless signing (cosign)
+
+# Runner hardening: the build job starts with step-security/harden-runner in
+# `egress-policy: audit`. Flip to `block` once the egress is confirmed; this job
+# additionally needs ghcr.io and the Sigstore keyless-signing hosts
+# (fulcio.sigstore.dev, rekor.sigstore.dev, tuf-repo-cdn.sigstore.dev) beyond
+# the usual crates.io / github.com set.
+env:
+  TRIVY_VERSION: "0.72.0"
+  COSIGN_VERSION: "3.1.1"
+
+jobs:
+  build:
+    name: Build and push to GHCR
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Check out code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      # GHCR image names must be lowercase; github.repository may not be.
+      - name: Compute image name
+        run: echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6.1.0
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # SLSA build provenance + SPDX SBOM, attached to the image as OCI
+          # attestations (inspect with `docker buildx imagetools inspect`).
+          provenance: mode=max
+          sbom: true
+
+      # Scan the exact pushed image (by digest) before it is trusted. Runs after
+      # push so BuildKit can attach the attestations above; the image is only
+      # *signed* below if this gate passes, so an unsigned image is the signal to
+      # downstream (Flux) not to deploy it.
+      - name: Install Trivy
+        run: |
+          curl -sfL "https://raw.githubusercontent.com/aquasecurity/trivy/v${TRIVY_VERSION}/contrib/install.sh" \
+            | sh -s -- -b /usr/local/bin "v${TRIVY_VERSION}"
+
+      - name: Scan pushed image (gate on fixable High/Critical)
+        env:
+          IMAGE: ${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
+        run: trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 "$IMAGE"
+
+      # Keyless signature (Sigstore/Fulcio via the job's OIDC token) - no stored
+      # keys. Verify with:
+      #   cosign verify <ref> \
+      #     --certificate-identity-regexp '^https://github.com/<owner>/<repo>/' \
+      #     --certificate-oidc-issuer https://token.actions.githubusercontent.com
+      - name: Install cosign
+        run: |
+          curl -sSfL -o /usr/local/bin/cosign \
+            "https://github.com/sigstore/cosign/releases/download/v${COSIGN_VERSION}/cosign-linux-amd64"
+          chmod +x /usr/local/bin/cosign
+          cosign version
+
+      - name: Sign image (keyless)
+        env:
+          IMAGE: ${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
+        run: cosign sign --yes "$IMAGE"

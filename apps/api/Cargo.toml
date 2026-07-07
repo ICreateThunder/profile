@@ -1,0 +1,67 @@
+[package]
+name = "portfolio-api"
+description = "Personal portfolio - robertshalders.com (Axum + Maud server-rendered MASH)"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "portfolio-api"
+path = "src/main.rs"
+
+[dependencies]
+# Web framework
+axum = "0.8"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal"] }
+tower-http = { version = "0.6", features = ["fs", "set-header", "compression-gzip", "timeout", "limit"] }
+
+# Templating
+maud = { version = "0.27", features = ["axum"] }
+
+# Observability
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+axum-prometheus = "0.10"   # HTTP metrics (request rate/duration) for /metrics
+
+# Content
+pulldown-cmark = "0.13"
+ammonia = "4"      # HTML sanitiser - strips script/iframe/on*= from rendered markdown
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"   # JSON-LD structured-data generation (proper escaping)
+toml = "0.9"       # frontmatter (pure-safe-Rust parser)
+
+# Security headers
+sha2 = "0.10"      # CSP content hashes / Repr-Digest
+base64 = "0.22"
+
+# HTTP Message Signatures (RFC 9421) - Ed25519 response signing
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+rand_core = { version = "0.6", features = ["getrandom"] }
+
+# OTLP trace export - feature-gated (collector is in-flight); off by default.
+opentelemetry = { version = "0.32", optional = true }
+opentelemetry_sdk = { version = "0.32", optional = true, features = ["rt-tokio"] }
+opentelemetry-otlp = { version = "0.32", optional = true, features = ["grpc-tonic"] }
+tracing-opentelemetry = { version = "0.33", optional = true }
+
+[features]
+otlp = [
+    "dep:opentelemetry",
+    "dep:opentelemetry_sdk",
+    "dep:opentelemetry-otlp",
+    "dep:tracing-opentelemetry",
+]
+
+[dev-dependencies]
+# In-process HTTP integration testing (tests/http.rs): drive the router via
+# `tower::ServiceExt::oneshot`, read bodies via `http-body-util::BodyExt`.
+tower = { version = "0.5", features = ["util"] }
+http-body-util = "0.1"
+# Benchmarks (benches/render.rs) - content load, hashing, full request path.
+criterion = { version = "0.5", features = ["async_tokio"] }
+
+[[bench]]
+name = "render"
+harness = false

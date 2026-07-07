@@ -1,0 +1,23 @@
+[workspace]
+resolver = "3"
+members = ["apps/api", "crates/lib-core"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+authors = ["Robert Shalders <robert@shalders.co.uk>"]
+license = "AGPL-3.0-or-later"
+repository = "https://github.com/ICreateThunder/profile"
+
+# Release profile lives at the workspace root - Cargo ignores `[profile.*]` in
+# non-root member manifests.
+# `bench` inherits from `release`, so this also governs criterion benchmarks.
+[profile.release]
+opt-level = 3       # optimise for speed - measured ~3x faster request path than
+                    # "z" (252us -> 82us on get_home) for ~+30% binary size
+                    # (~0.7 MiB, negligible in a container). This is a server,
+                    # not an embedded/size-constrained target.
+lto = true          # link-time optimisation
+codegen-units = 1   # single codegen unit for max optimisation
+strip = true        # strip debug symbols
+panic = "abort"     # abort on panic (smaller binary, no unwinding)

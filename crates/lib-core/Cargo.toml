@@ -1,0 +1,10 @@
+[package]
+name = "lib-core"
+description = "Shared domain types, IDs, and audit primitives for the portfolio workspace"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]

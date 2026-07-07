@@ -1,0 +1,525 @@
+@import "tailwindcss";
+@plugin '@tailwindcss/typography';
+
+/* All fonts self-hosted - no CDN dependencies */
+
+@font-face {
+  font-family: "Bebas Neue";
+  src: url("/static/fonts/BebasNeue-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/static/fonts/JetBrainsMono-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/static/fonts/JetBrainsMono-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/static/fonts/JetBrainsMono-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Trivial";
+  src: url("/static/fonts/Trivial-UltraLight.otf");
+  font-weight: 100;
+}
+@font-face {
+  font-family: "Trivial";
+  src: url("/static/fonts/Trivial-ExtraLight.otf");
+  font-weight: 200;
+}
+@font-face {
+  font-family: "Trivial";
+  src: url("/static/fonts/Trivial-Regular.otf");
+  font-weight: 400;
+}
+@font-face {
+  font-family: "Trivial";
+  src: url("/static/fonts/Trivial-Bold.otf");
+  font-weight: 700;
+}
+@font-face {
+  font-family: "Trivial";
+  src: url("/static/fonts/Trivial-Heavy.otf");
+  font-weight: 900;
+}
+
+/* Custom theme */
+@theme {
+  --font-trivial: "Trivial", sans-serif;
+  --font-bebas: "Bebas Neue", sans-serif;
+  --font-jetbrains: "JetBrains Mono", monospace;
+
+  /* Motion tokens - one consistent vocabulary for every transition/easing.
+     Use var(--dur)/var(--ease-crt) instead of scattered 150/200/300ms. */
+  --dur-fast: 150ms;
+  --dur: 250ms;
+  --dur-slow: 400ms;
+  --ease-crt: cubic-bezier(0.23, 1, 0.32, 1);
+
+  --animate-fade-in: fade-in 1s ease-in-out;
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  --animate-slide-down: slide-down 1s forwards;
+  @keyframes slide-down {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(0); }
+  }
+
+  --animate-shift: shift 0.15s linear infinite both;
+  @keyframes shift {
+    0% { transform: translateX(10%) translateY(10%); }
+    100% { transform: translateX(-10%) translateY(-10%); }
+  }
+
+}
+
+/* Hero text stagger */
+.hero-text:nth-child(2) { animation-delay: 40ms; }
+.hero-text:nth-child(3) { animation-delay: 80ms; }
+.hero-text:nth-child(4) { animation-delay: 120ms; }
+.hero-text:nth-child(5) { animation-delay: 160ms; }
+
+/* Background noise */
+.animated-background {
+  background-image: url("/static/images/noise.png");
+  opacity: 0.125;
+}
+
+/* CTA hover effect */
+.cta {
+  isolation: isolate;
+  transition: all 150ms ease-in-out;
+  box-shadow: 10px 10px rgba(0,0,0,0), -4px 4px 0px 0px oklch(91% 0.096 180.426), -8px 8px 0px 0px oklch(95.3% 0.051 180.801);
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+}
+.cta:hover {
+  color: black;
+  cursor: pointer;
+  box-shadow: 10px 10px rgba(0,0,0,0), -6px 6px 0px 0px oklch(91% 0.096 180.426), -12px 12px 0px 0px oklch(95.3% 0.051 180.801);
+  border-color: oklch(78.9% 0.154 211.53);
+}
+.cta::before {
+  content: "";
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  transform-origin: center;
+  transform: translateX(-200%) scale(3) rotate(45deg);
+  background: linear-gradient(to right, oklch(78.9% 0.154 211.53), oklch(78.9% 0.154 211.53), oklch(85.5% 0.138 181.071));
+  transition: transform 350ms cubic-bezier(0.23, 1, 0.32, 1);
+  z-index: -1;
+}
+.cta:hover::before {
+  transform: translateX(0) scale(3) rotate(45deg);
+}
+
+/* CRT flicker animations */
+@keyframes crt-flicker-a {
+  0%   { opacity: 0.9;  transform: translateY(0); }
+  20%  { opacity: 0.4;  transform: translateY(-1px); }
+  35%  { opacity: 0.95; transform: translateY(1px); }
+  55%  { opacity: 0.5;  transform: translateY(0); }
+  70%  { opacity: 0.85; transform: translateY(-0.5px); }
+  100% { opacity: 0.9;  transform: translateY(0); }
+}
+@keyframes crt-flicker-b {
+  0%   { opacity: 0.8; }
+  15%  { opacity: 0.3; }
+  30%  { opacity: 0.9; }
+  60%  { opacity: 0.45; }
+  85%  { opacity: 1; }
+  100% { opacity: 0.8; }
+}
+.flicker-a { animation: crt-flicker-a 2.2s infinite steps(2, end); }
+.flicker-b { animation: crt-flicker-b 1.7s infinite steps(3, end); }
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: oklch(25% 0.04 211); border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: oklch(78.9% 0.154 211.53); }
+* { scrollbar-width: thin; scrollbar-color: oklch(25% 0.04 211) transparent; }
+
+/* Phosphor glow utilities */
+.glow-cyan  { text-shadow: 0 0 6px oklch(78.9% 0.154 211.53), 0 0 14px oklch(78.9% 0.154 211.53 / 0.5); }
+
+/* Glitch effect */
+.glitch { position: relative; }
+.glitch::before, .glitch::after {
+  content: attr(data-text);
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  overflow: hidden; pointer-events: none;
+}
+.glitch::before { color: oklch(65% 0.25 25);  animation: glitch-red 5s infinite steps(1); }
+.glitch::after  { color: oklch(65% 0.2 220);  animation: glitch-cyan 5s infinite steps(1); }
+
+@keyframes glitch-red {
+  0%, 82%        { clip-path: inset(0 0 100% 0); transform: translate(0, 0); }
+  83%            { clip-path: inset(15% 0 65% 0); transform: translate(-3px, -2px); }
+  84%            { clip-path: inset(60% 0 10% 0); transform: translate(4px, 1px); }
+  85%            { clip-path: inset(5% 0 80% 0);  transform: translate(-2px, 3px); }
+  86%            { clip-path: inset(40% 0 35% 0); transform: translate(5px, -1px); }
+  87%            { clip-path: inset(70% 0 5% 0);  transform: translate(-4px, 2px); }
+  88%            { clip-path: inset(25% 0 55% 0); transform: translate(2px, -3px); }
+  89%, 100%      { clip-path: inset(0 0 100% 0); transform: translate(0, 0); }
+}
+@keyframes glitch-cyan {
+  0%, 83%        { clip-path: inset(0 0 100% 0); transform: translate(0, 0); }
+  84%            { clip-path: inset(45% 0 30% 0); transform: translate(3px, 2px); }
+  85%            { clip-path: inset(10% 0 70% 0); transform: translate(-5px, -1px); }
+  86%            { clip-path: inset(75% 0 5% 0);  transform: translate(2px, -2px); }
+  87%            { clip-path: inset(20% 0 50% 0); transform: translate(-3px, 3px); }
+  88%            { clip-path: inset(55% 0 20% 0); transform: translate(4px, -2px); }
+  89%            { clip-path: inset(35% 0 45% 0); transform: translate(-2px, 1px); }
+  90%, 100%      { clip-path: inset(0 0 100% 0); transform: translate(0, 0); }
+}
+
+/* Hero 3D extruded text */
+.hero-3d {
+  text-shadow:
+    -2px 2px 0 var(--color-teal-400),
+    -4px 4px 0 var(--color-teal-400),
+    -6px 6px 0 var(--color-teal-300),
+    -8px 8px 0 white;
+}
+
+/* Blinking cursor */
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.animate-blink { animation: blink 1s steps(1) infinite; }
+
+/* Project marquee */
+.marquee-fade {
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+.marquee-track {
+  display: flex; width: max-content;
+  animation: marquee-scroll 40s linear infinite;
+}
+.marquee-track:hover { animation-play-state: paused; }
+.marquee-content { display: flex; gap: 2rem; padding: 0.75rem 1rem; flex-shrink: 0; }
+.marquee-card {
+  display: flex; flex-direction: column; gap: 0.25rem;
+  padding: 0.5rem 1rem; border: 1px solid oklch(25% 0.02 211);
+  border-radius: 0; transition: all 150ms ease; white-space: nowrap;
+}
+.marquee-card:hover { border-color: oklch(78.9% 0.154 211.53); }
+.marquee-card:hover span:first-child { color: oklch(78.9% 0.154 211.53); }
+.marquee-card:hover span:last-child { color: oklch(60% 0 0); }
+@keyframes marquee-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ===========================================================================
+   Maximal-cyberpunk CRT layer - scanlines, page wipes, glitch-on-hover,
+   scroll-reveal, boot loader. Everything below no-ops under reduced motion
+   (see the guard at the very end).
+   =========================================================================== */
+
+/* --- Global CRT overlay: persistent scanlines + vignette + faint flicker.
+   Sits above content (pointer-events:none), tuned subtle so text stays legible. */
+.crt-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9990;
+  pointer-events: none;
+  /* scanlines */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 2px,
+    oklch(0% 0 0 / 0.16) 3px,
+    transparent 4px
+  );
+  background-size: 100% 4px;
+  /* vignette via a second layered radial gradient */
+  box-shadow: inset 0 0 180px 40px oklch(0% 0 0 / 0.55);
+  mix-blend-mode: multiply;
+  opacity: 0.55;
+  animation: crt-overlay-flicker 4s infinite steps(60);
+}
+.crt-overlay::after {
+  /* moving phosphor sweep band */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    oklch(78.9% 0.154 211.53 / 0.04) 50%,
+    transparent 100%
+  );
+  background-size: 100% 8px;
+  animation: crt-sweep 8s linear infinite;
+}
+@keyframes crt-overlay-flicker {
+  0%, 100% { opacity: 0.5; }
+  48%      { opacity: 0.5; }
+  49%      { opacity: 0.62; }
+  50%      { opacity: 0.42; }
+  51%      { opacity: 0.58; }
+  52%      { opacity: 0.5; }
+}
+@keyframes crt-sweep {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+/* --- Hover-glitch: reuse the idle glitch-red/cyan keyframes but fire on
+   hover/focus. Apply .glitch-hover + data-text="..." to links/headings. */
+.glitch-hover { position: relative; }
+.glitch-hover::before,
+.glitch-hover::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  clip-path: inset(0 0 100% 0);
+}
+.glitch-hover:hover::before,
+.glitch-hover:focus-visible::before {
+  opacity: 0.9;
+  color: oklch(65% 0.25 25);
+  animation: glitch-hover-red 0.45s steps(2) 1;
+}
+.glitch-hover:hover::after,
+.glitch-hover:focus-visible::after {
+  opacity: 0.9;
+  color: oklch(65% 0.2 220);
+  animation: glitch-hover-cyan 0.45s steps(2) 1;
+}
+@keyframes glitch-hover-red {
+  0%   { clip-path: inset(10% 0 70% 0); transform: translate(-3px, -1px); }
+  25%  { clip-path: inset(55% 0 20% 0); transform: translate(3px, 1px); }
+  50%  { clip-path: inset(30% 0 45% 0); transform: translate(-2px, 2px); }
+  75%  { clip-path: inset(70% 0 5% 0);  transform: translate(2px, -2px); }
+  100% { clip-path: inset(0 0 100% 0);  transform: translate(0, 0); opacity: 0; }
+}
+@keyframes glitch-hover-cyan {
+  0%   { clip-path: inset(45% 0 30% 0); transform: translate(3px, 1px); }
+  25%  { clip-path: inset(15% 0 65% 0); transform: translate(-3px, -1px); }
+  50%  { clip-path: inset(60% 0 15% 0); transform: translate(2px, 2px); }
+  75%  { clip-path: inset(25% 0 50% 0); transform: translate(-2px, -2px); }
+  100% { clip-path: inset(0 0 100% 0);  transform: translate(0, 0); opacity: 0; }
+}
+
+/* --- Cursor-reactive hero: JS sets transform each frame; this smooths the
+   settle when the pointer stops. */
+[data-hero-react] {
+  transition: transform var(--dur-fast) var(--ease-crt);
+  will-change: transform;
+}
+
+/* --- Scroll-reveal: cards start shifted+dim, settle when .in is added (JS).
+   Only hidden when JS is active (`.js` set by app.js) so no-JS shows everything. */
+.reveal {
+  transition: opacity var(--dur-slow) var(--ease-crt),
+              transform var(--dur-slow) var(--ease-crt);
+  will-change: opacity, transform;
+}
+.js .reveal:not(.in) {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+/* --- CRT page-transition wipe (View Transitions API, wired via htmx).
+   Outgoing collapses to a bright line + flash; incoming powers back open. */
+@keyframes crt-power-off {
+  0%   { transform: scaleY(1);    filter: brightness(1); opacity: 1; }
+  60%  { transform: scaleY(0.96); filter: brightness(1.4); }
+  100% { transform: scaleY(0.004); filter: brightness(6); opacity: 0.9; }
+}
+@keyframes crt-power-on {
+  0%   { transform: scaleY(0.004) scaleX(1.4); filter: brightness(6); opacity: 0.9; }
+  35%  { transform: scaleY(0.02)  scaleX(1);   filter: brightness(3); }
+  60%  { transform: scaleY(1)     scaleX(1);   filter: brightness(1.6); }
+  100% { transform: scaleY(1)     scaleX(1);   filter: brightness(1); opacity: 1; }
+}
+::view-transition-old(root) {
+  animation: crt-power-off 0.28s var(--ease-crt) both;
+  transform-origin: center;
+}
+::view-transition-new(root) {
+  animation: crt-power-on 0.42s var(--ease-crt) both;
+  transform-origin: center;
+}
+/* Back/forward navigation: plain cross-fade instead of the power-cycle wipe. */
+@keyframes vt-fade-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes vt-fade-out { from { opacity: 1; } to { opacity: 0; } }
+html.vt-back::view-transition-old(root) {
+  animation: vt-fade-out var(--dur) ease both;
+}
+html.vt-back::view-transition-new(root) {
+  animation: vt-fade-in var(--dur) ease both;
+}
+
+/* --- Boot loader: first full load only (JS toggles .booting on <html>).
+   A single neobrutalist meter fills, then the overlay clears to the page.
+   Flat, high-contrast, sharp - no gradient, no glow. Teal to match the scene. */
+.boot {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  overflow: hidden;
+}
+.booting .boot { display: flex; }
+.booting body > main { animation: none; }
+
+/* Neobrutalist meter: chunky white track, thick border, hard (un-blurred)
+   offset shadow, flat teal fill. JS drives `--p` as it advances. */
+.boot-bar {
+  position: relative;
+  width: min(72vw, 380px);
+  height: 30px;
+  padding: 5px;
+  background: #000;
+  border: 3px solid #fff;
+  box-shadow: 8px 8px 0 0 rgb(45 212 191); /* hard offset - the neobrutalist tell */
+}
+.boot-bar::after {
+  content: "";
+  display: block;
+  height: 100%;
+  width: var(--p, 0%); /* JS eases this toward 100% */
+  background: rgb(45 212 191);
+}
+.boot-fade-out { animation: boot-out 0.4s ease-in forwards !important; }
+@keyframes boot-out { to { opacity: 0; visibility: hidden; } }
+
+/* ===========================================================================
+   QOL: keyboard focus, command palette, manual "reduce effects" toggle
+   =========================================================================== */
+
+/* Visible focus ring for keyboard users (not on mouse click). */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid rgb(45 212 191);
+  outline-offset: 2px;
+  border-radius: 1px;
+}
+/* <main> receives focus on route change but shouldn't flash a ring. */
+main:focus { outline: none; }
+
+/* Command palette (⌘/Ctrl-K) */
+.cmdk-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+  background: rgb(0 0 0 / 0.7);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+.cmdk-overlay[hidden] { display: none; }
+.cmdk {
+  width: min(92vw, 560px);
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  background: #05080a;
+  border: 1px solid rgb(45 212 191 / 0.5);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.8), 0 0 30px rgb(45 212 191 / 0.2);
+  font-family: var(--font-jetbrains);
+}
+.cmdk-input {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgb(45 212 191 / 0.3);
+  color: #fff;
+  font: inherit;
+  font-size: 0.95rem;
+  padding: 0.85rem 1rem;
+  outline: none;
+}
+.cmdk-input::placeholder { color: oklch(60% 0 0); }
+.cmdk-list { list-style: none; margin: 0; padding: 0.35rem; overflow-y: auto; }
+.cmdk-group {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: rgb(45 212 191 / 0.7);
+  padding: 0.6rem 0.6rem 0.25rem;
+}
+.cmdk-item { margin: 0; }
+.cmdk-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  color: oklch(85% 0 0);
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.6rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+.cmdk-item.is-active > .cmdk-link,
+.cmdk-link:hover { background: rgb(45 212 191 / 0.14); color: #fff; }
+.cmdk-ext { color: rgb(45 212 191 / 0.7); font-size: 0.75rem; }
+.cmdk-empty { color: oklch(55% 0 0); font-size: 0.8rem; padding: 0.8rem 0.6rem; text-align: center; }
+
+/* Manual "reduce effects" toggle - app.js sets .fx-off on <html>. Mirrors the
+   reduced-motion kill-switch but user-controlled (persisted in localStorage). */
+.fx-off .crt-overlay,
+.fx-off .animated-background,
+.fx-off [data-bg-grid],
+.fx-off [data-warp] { display: none; }
+.fx-off .glitch::before, .fx-off .glitch::after,
+.fx-off .glitch-hover::before, .fx-off .glitch-hover::after { display: none; }
+.fx-off .reveal { opacity: 1 !important; transform: none !important; }
+.fx-off .flicker-a, .fx-off .flicker-b,
+.fx-off .animate-blink, .fx-off .marquee-track, .fx-off .animate-shift { animation: none !important; }
+html.fx-off::view-transition-old(root),
+html.fx-off::view-transition-new(root) { animation: none; }
+
+/* --- Accessibility: honour reduced motion. Kill the heavy/looping effects;
+   keep the site fully styled and usable. */
+@media (prefers-reduced-motion: reduce) {
+  .crt-overlay { animation: none; }
+  .crt-overlay::after { animation: none; display: none; }
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .glitch-hover::before, .glitch-hover::after { display: none; }
+  .boot, .booting .boot { display: none !important; }
+  /* Stop the CRT flicker dimming text below contrast (and remove the flashing). */
+  .flicker-a, .flicker-b { animation: none !important; }
+  ::view-transition-old(root),
+  ::view-transition-new(root) { animation: none; }
+}

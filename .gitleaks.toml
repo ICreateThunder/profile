@@ -1,0 +1,24 @@
+# gitleaks configuration - secret scanning.
+# Extends the upstream default ruleset; CI runs gitleaks on every PR.
+
+title = "portfolio gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Project-wide allowlist for known non-secrets (regexes match file paths across history)."
+paths = [
+    '''.*Cargo\.lock''',
+    '''.*bun\.lock''',
+    '''.*static/vendor/.*''',               # vendored third-party JS (htmx)
+    '''LICENSE''',
+    # Documentation that contains illustrative (non-secret) auth/path examples:
+    '''.*content/tricks/copy-as-curl\.md''', # an article about `curl`, incl. -H "Authorization: …"
+    '''CONTRIBUTING\.md''',                   # ~/.ssh signing-key setup example
+]
+# The maintainer PGP fingerprint published in SECURITY.md is public key material,
+# not a secret.
+regexes = [
+    '''1A44 8CE4 18BD 8D37 1D12  B697 418D 45B7 1F57 D61F''',
+]

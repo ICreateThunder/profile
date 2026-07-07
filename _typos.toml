@@ -1,0 +1,16 @@
+# typos configuration - spell-check for source and docs.
+# Run with `typos`, locally via scripts/check-all.sh.
+
+[files]
+extend-exclude = [
+    "Cargo.lock",
+    "apps/api/bun.lock",
+    "apps/api/static/vendor/**",   # vendored htmx (minified, third-party)
+    "apps/api/static/styles.css",  # generated Tailwind output
+    "apps/api/static/fonts/**",
+    "LICENSE",                     # verbatim AGPLv3 text
+]
+
+[default.extend-words]
+# Real words/names typos misreads. Keep this list tight.
+Pease = "Pease"   # Marshall Pease - co-author of the 1982 BFT paper
