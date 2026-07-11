@@ -10,6 +10,12 @@
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var finePointer =
     window.matchMedia && window.matchMedia("(pointer: fine)").matches;
+  // Touch phones/tablets: skip the always-on canvas backdrops (warp/grid). They
+  // run a per-frame rAF loop that costs more than it adds on mobile; the CSS
+  // drops the matching background effects under the same media query.
+  var lowPowerBackdrop =
+    window.matchMedia &&
+    window.matchMedia("(hover: none) and (pointer: coarse)").matches;
 
   // Flag JS as available - CSS gates the scroll-reveal hidden state on `.js` so
   // the site shows all content if this script never runs.
@@ -488,8 +494,10 @@
     initTypewriter();
     initHero();
     initReveal();
-    initBgGrid();
-    initWarp();
+    if (!lowPowerBackdrop) {
+      initBgGrid();
+      initWarp();
+    }
     initArticleSearch();
   }
 

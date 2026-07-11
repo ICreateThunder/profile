@@ -510,6 +510,23 @@ main:focus { outline: none; }
 html.fx-off::view-transition-old(root),
 html.fx-off::view-transition-new(root) { animation: none; }
 
+/* --- Mobile perf: on touch devices the always-on background effects are the
+   heaviest compositor work - the fast noise-shift transform on a huge
+   (-inset-full) element, and the full-viewport multiply-blend CRT overlay with
+   its moving sweep band. They repaint on every scroll frame and cause the jank
+   reported on phones. Keep the static look (noise texture, scanlines, vignette)
+   but drop the continuous repaints. Canvas backdrops (warp/grid) are skipped in
+   app.js under the same conditions. */
+@media (hover: none) and (pointer: coarse) {
+  .animate-shift { animation: none !important; }
+  .crt-overlay {
+    mix-blend-mode: normal;
+    animation: none;
+    opacity: 0.5;
+  }
+  .crt-overlay::after { display: none; }
+}
+
 /* --- Accessibility: honour reduced motion. Kill the heavy/looping effects;
    keep the site fully styled and usable. */
 @media (prefers-reduced-motion: reduce) {

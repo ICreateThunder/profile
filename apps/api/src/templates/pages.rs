@@ -135,7 +135,7 @@ pub fn profile(render: &layout::Render) -> impl IntoResponse + use<> {
             "relative overflow-hidden",
             "-z-20",
             html! {
-                    div class="flex flex-col items-center justify-center gap-8 w-full h-full overflow-y-auto p-8" {
+                    div class="flex flex-col items-center justify-start lg:justify-center gap-8 w-full h-full overflow-y-auto p-6 sm:p-8" {
                         h1 class="sr-only" { "Robert Shalders - software engineer" }
 
                         // Identity - same hero treatment as the home page
