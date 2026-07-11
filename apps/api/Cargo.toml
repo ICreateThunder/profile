@@ -37,7 +37,7 @@ sha2 = "0.10"      # CSP content hashes / Repr-Digest
 base64 = "0.22"
 
 # HTTP Message Signatures (RFC 9421) - Ed25519 response signing
-ed25519-dalek = { version = "2", features = ["rand_core"] }
+ed25519-dalek = { version = "3", features = ["rand_core"] }
 rand_core = { version = "0.6", features = ["getrandom"] }
 
 # OTLP trace export - feature-gated (collector is in-flight); off by default.
