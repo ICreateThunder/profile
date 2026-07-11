@@ -15,7 +15,7 @@ path = "src/main.rs"
 # Web framework
 axum = "0.8"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal"] }
-tower-http = { version = "0.6", features = ["fs", "set-header", "compression-gzip", "timeout", "limit"] }
+tower-http = { version = "0.7", features = ["fs", "set-header", "compression-gzip", "timeout", "limit"] }
 
 # Templating
 maud = { version = "0.27", features = ["axum"] }
@@ -30,15 +30,15 @@ pulldown-cmark = "0.13"
 ammonia = "4"      # HTML sanitiser - strips script/iframe/on*= from rendered markdown
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"   # JSON-LD structured-data generation (proper escaping)
-toml = "0.9"       # frontmatter (pure-safe-Rust parser)
+toml = "1"         # frontmatter (pure-safe-Rust parser)
 
 # Security headers
-sha2 = "0.10"      # CSP content hashes / Repr-Digest
+sha2 = "0.11"      # CSP content hashes / Repr-Digest
 base64 = "0.22"
 
 # HTTP Message Signatures (RFC 9421) - Ed25519 response signing
-ed25519-dalek = { version = "2", features = ["rand_core"] }
-rand_core = { version = "0.6", features = ["getrandom"] }
+ed25519-dalek = "3"
+getrandom = "0.3"  # OS entropy for the ephemeral dev signing seed
 
 # OTLP trace export - feature-gated (collector is in-flight); off by default.
 opentelemetry = { version = "0.32", optional = true }
@@ -60,7 +60,7 @@ otlp = [
 tower = { version = "0.5", features = ["util"] }
 http-body-util = "0.1"
 # Benchmarks (benches/render.rs) - content load, hashing, full request path.
-criterion = { version = "0.5", features = ["async_tokio"] }
+criterion = { version = "0.8", features = ["async_tokio"] }
 
 [[bench]]
 name = "render"
