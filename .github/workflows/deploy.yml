@@ -5,7 +5,8 @@
 # ephemeral GITHUB_TOKEN - no cloud credentials are stored in CI.
 #
 # Deployment is decoupled (GitOps): this workflow's job ends at a signed image in
-# GHCR. A separate promotion step pins that image *by digest* into a private
+# GHCR carrying a keyless SLSA provenance attestation. A separate promotion step
+# pins that image *by digest* into a private
 # deploy repository, which Flux reconciles into an isolated namespace on a hosted
 # cluster - Flux tracks the deploy repository, not the registry and not this repo.
 # Nothing about that cluster - provider, topology, addresses - lives in this
@@ -125,3 +126,22 @@ jobs:
         env:
           IMAGE: ${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
         run: cosign sign --yes "$IMAGE"
+
+      # Attest the SLSA provenance as a keyless Cosign attestation. BuildKit
+      # already embeds an *unsigned* in-toto provenance in the image index
+      # (`provenance: mode=max` above); this re-attaches that same predicate as
+      # a Cosign/Rekor attestation under the workflow's OIDC identity, so it is
+      # verifiable by identity the same way the signature is:
+      #   cosign verify-attestation <ref> --type slsaprovenance1 \
+      #     --certificate-identity-regexp '^https://github.com/<owner>/<repo>/' \
+      #     --certificate-oidc-issuer https://token.actions.githubusercontent.com
+      # `slsaprovenance1` == the SLSA v1 predicate BuildKit emits; the cluster
+      # admission policy must verify the same (v1, not the older v0.2 type).
+      - name: Attest SLSA provenance (keyless)
+        env:
+          IMAGE: ${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
+        run: |
+          docker buildx imagetools inspect "$IMAGE" \
+            --format '{{ json .Provenance.SLSA }}' > provenance.json
+          cosign attest --yes --type slsaprovenance1 \
+            --predicate provenance.json "$IMAGE"
