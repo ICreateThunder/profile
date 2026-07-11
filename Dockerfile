@@ -4,7 +4,7 @@
 # the dependency set (recipe.json) does.
 # Base pinned by manifest-list digest (tag kept for readability). Dependabot
 # (docker ecosystem) bumps the digest; a moved/compromised tag cannot swap it.
-FROM rust:1.95-bookworm@sha256:6258907abe69656e41cd992e0b705cdcfabcbbe3db374f92ed2d47121282d4a1 AS chef
+FROM rust:1.97-bookworm@sha256:7d0723df719e7f213b69dc7c8c595985c3f4b060cfbee4f7bc0e347a86fe3b6a AS chef
 # Pinned for reproducibility; Dependabot (cargo) surfaces bumps.
 RUN cargo install cargo-chef --locked --version 0.1.77
 WORKDIR /app
@@ -44,7 +44,7 @@ RUN cargo auditable build --release --locked -p portfolio-api
 # Stage 4: runtime
 # Distroless static - no libc beyond glibc, no shell, no package manager.
 # Pinned by manifest-list digest (see note on the builder base above).
-FROM gcr.io/distroless/cc-debian12:nonroot@sha256:b0ae8e989418b458e0f25489bc3be523718938a2b70864cc0f6a00af1ddbd985
+FROM gcr.io/distroless/cc-debian12:nonroot@sha256:ce0d66bc0f64aae46e6a03add867b07f42cc7b8799c949c2e898057b7f75a151
 
 WORKDIR /app
 

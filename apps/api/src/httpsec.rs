@@ -129,7 +129,9 @@ impl Signer {
                      key. Response signatures will not verify across replicas or after a \
                      restart. Set a shared 32-byte seed (base64, from a Secret) in production."
                 );
-                SigningKey::generate(&mut rand_core::OsRng)
+                let mut seed = [0u8; 32];
+                getrandom::fill(&mut seed).expect("OS RNG unavailable for ephemeral signing key");
+                SigningKey::from_bytes(&seed)
             }
         };
         Self::new(key)
