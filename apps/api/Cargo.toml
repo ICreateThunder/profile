@@ -15,7 +15,7 @@ path = "src/main.rs"
 # Web framework
 axum = "0.8"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal"] }
-tower-http = { version = "0.6", features = ["fs", "set-header", "compression-gzip", "timeout", "limit"] }
+tower-http = { version = "0.7", features = ["fs", "set-header", "compression-gzip", "timeout", "limit"] }
 
 # Templating
 maud = { version = "0.27", features = ["axum"] }
