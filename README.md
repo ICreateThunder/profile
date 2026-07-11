@@ -1,5 +1,11 @@
 # Robert Shalders - Portfolio
 
+[![CI](https://github.com/ICreateThunder/profile/actions/workflows/ci.yml/badge.svg)](https://github.com/ICreateThunder/profile/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/ICreateThunder/profile/actions/workflows/codeql.yml/badge.svg)](https://github.com/ICreateThunder/profile/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/ICreateThunder/profile/badge)](https://securityscorecards.dev/viewer/?uri=github.com/ICreateThunder/profile)
+[![dependencies](https://deps.rs/repo/github/ICreateThunder/profile/status.svg)](https://deps.rs/repo/github/ICreateThunder/profile)
+[![License: AGPL-3.0-or-later](https://img.shields.io/badge/License-AGPL_3.0--or--later-blue.svg)](LICENSE)
+
 Personal portfolio and technical blog at [robertshalders.com](https://robertshalders.com).
 Server-rendered Rust, no client framework, built to paint correctly on the first
 frame and navigate instantly.
