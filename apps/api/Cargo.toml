@@ -60,7 +60,7 @@ otlp = [
 tower = { version = "0.5", features = ["util"] }
 http-body-util = "0.1"
 # Benchmarks (benches/render.rs) - content load, hashing, full request path.
-criterion = { version = "0.5", features = ["async_tokio"] }
+criterion = { version = "0.8", features = ["async_tokio"] }
 
 [[bench]]
 name = "render"
