@@ -4,7 +4,7 @@
 # the dependency set (recipe.json) does.
 # Base pinned by manifest-list digest (tag kept for readability). Dependabot
 # (docker ecosystem) bumps the digest; a moved/compromised tag cannot swap it.
-FROM rust:1.97-bookworm@sha256:7d0723df719e7f213b69dc7c8c595985c3f4b060cfbee4f7bc0e347a86fe3b6a AS chef
+FROM rust:1.97-bookworm@sha256:77fac8b98f9f46062bb680b6d25d5bcaabfc400143952ebc572e924bcbedc3fa AS chef
 # Pinned for reproducibility; Dependabot (cargo) surfaces bumps.
 RUN cargo install cargo-chef --locked --version 0.1.77
 WORKDIR /app
