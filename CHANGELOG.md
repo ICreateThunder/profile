@@ -8,6 +8,21 @@ Release tooling extracts the notes for a tag `vX.Y.Z` from its `## [X.Y.Z]` sect
 
 ## [Unreleased]
 
+### Security
+
+- Updated `ammonia` 4.1.3 to 4.1.4 to close **RUSTSEC-2026-0213** (XSS via SVG
+  `animate`/`set` tags in the HTML sanitiser). The sanitiser runs behind a
+  `default-src 'none'` CSP on author-trusted content, so the practical exposure
+  was low, but the advisory is now cleared.
+
+### Changed
+
+- Dependency update pass. Cargo: `getrandom` 0.3 to 0.4 (major), plus a
+  lockfile refresh (`serde` 1.0.229, `serde_json` 1.0.151, `tokio` 1.53.1, and
+  others). GitHub Actions: `checkout` 7.0.1, `codeql-action` 4.37.3,
+  `docker/login-action` 4.5.1, `scorecard-action` 2.4.4. Rust Docker base image
+  digest refreshed.
+
 ## [0.1.0] - 2026-07-11
 
 First public release: the site rewritten on the Rust MASH stack, published as a

@@ -38,7 +38,7 @@ base64 = "0.22"
 
 # HTTP Message Signatures (RFC 9421) - Ed25519 response signing
 ed25519-dalek = "3"
-getrandom = "0.3"  # OS entropy for the ephemeral dev signing seed
+getrandom = "0.4"  # OS entropy for the ephemeral dev signing seed
 
 # OTLP trace export - feature-gated (collector is in-flight); off by default.
 opentelemetry = { version = "0.32", optional = true }
