@@ -34,7 +34,7 @@ toml = "1"         # frontmatter (pure-safe-Rust parser)
 
 # Security headers
 sha2 = "0.11"      # CSP content hashes / Repr-Digest
-base64 = "0.22"
+base64 = "0.23"
 
 # HTTP Message Signatures (RFC 9421) - Ed25519 response signing
 ed25519-dalek = "3"
